@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Money Monster - Sistema de Captación de Extractos Bancarios</title>
+    <meta name="description" content="Sistema automatizado para procesar extractos bancarios PDF - Money Monster">
+    <meta name="author" content="Money Monster">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f3f4f6;
+            color: #1f2937;
+            min-height: 100vh;
+        }
+        
+        /* Header Global */
+        .header {
+            background: linear-gradient(135deg, #9333ea 0%, #a855f7 50%, #fbbf24 100%);
+            color: white;
+            padding: 20px 30px;
+        }
+        
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .monster-icon {
+            width: 60px;
+            height: 60px;
+        }
+        
+        /* Main Content */
+        .main-container {
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+        
+        /* Drag & Drop Section */
+        .drag-drop-section {
+            background: white;
+            border-radius: 12px;
+            border: 1px solid #e5e7eb;
+            padding: 30px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        .drag-drop-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .drag-drop-header h1 {
+            font-size: 28px;
+            color: #1f2937;
+            margin-bottom: 10px;
+        }
+        
+        .drag-drop-header p {
+            color: #6b7280;
+            font-size: 16px;
+        }
+        
+        .drag-drop-zone {
+            border: 3px dashed #d1d5db;
+            border-radius: 12px;
+            padding: 60px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background-color: #fafafa;
+            position: relative;
+        }
+        
+        .drag-drop-zone.dragover {
+            border-color: #9333ea;
+            background-color: #f3e8ff;
+            transform: scale(1.02);
+        }
+        
+        .drag-drop-zone.processing {
+            border-color: #fbbf24;
+            background-color: #fef3c7;
+            cursor: not-allowed;
+        }
+        
+        .drag-drop-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+        }
+        
+        .drag-drop-title {
+            font-size: 24px;
+            font-weight: bold;
+            color: #1f2937;
+            margin-bottom: 10px;
+        }
+        
+        .drag-drop-subtitle {
+            font-size: 16px;
+            color: #6b7280;
+            margin-bottom: 20px;
+        }
+        
+        .file-input-hidden {
+            display: none;
+        }
+        
+        .limits-info {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .limit-badge {
+            background: #f3e8ff;
+            color: #9333ea;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        
+        /* Processing List */
+        .files-processing-list {
+            margin-top: 30px;
+            display: none;
+        }
+        
+        .processing-file-item {
+            display: flex;
+            align-items: center;
+            padding: 16px;
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            transition: all 0.3s ease;
+        }
+        
+        .processing-file-item.success {
+            background: #d1fae5;
+            border-color: #10b981;
+        }
+        
+        .processing-file-item.error {
+            background: #fee2e2;
+            border-color: #ef4444;
+        }
+        
+        .processing-file-icon {
+            margin-right: 16px;
+            font-size: 24px;
+        }
+        
+        .processing-file-info {
+            flex: 1;
+        }
+        
+        .processing-file-name {
+            font-weight: 600;
+            color: #1f2937;
+            font-size: 16px;
+        }
+        
+        .processing-file-status {
+            font-size: 14px;
+            color: #6b7280;
+            margin-top: 4px;
+        }
+        
+        .processing-spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid #e5e7eb;
+            border-top-color: #9333ea;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-right: 8px;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* Instructions Section */
+        .instructions-section {
+            background: white;
+            border-radius: 12px;
+            border: 1px solid #e5e7eb;
+            padding: 30px;
+            margin-top: 30px;
+        }
+        
+        .instructions-section h2 {
+            font-size: 24px;
+            margin-bottom: 20px;
+            color: #1f2937;
+        }
+        
+        .instruction-step {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 20px;
+        }
+        
+        .step-number {
+            background: #9333ea;
+            color: white;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 16px;
+            flex-shrink: 0;
+        }
+        
+        .step-content h3 {
+            font-size: 18px;
+            margin-bottom: 8px;
+            color: #1f2937;
+        }
+        
+        .step-content p {
+            color: #6b7280;
+            line-height: 1.6;
+        }
+        
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 40px 20px;
+            color: #6b7280;
+            font-size: 14px;
+        }
+        
+        .footer a {
+            color: #9333ea;
+            text-decoration: none;
+        }
+        
+        .footer a:hover {
+            text-decoration: underline;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                text-align: center;
+                gap: 20px;
+            }
+            
+            .drag-drop-zone {
+                padding: 40px 20px;
+            }
+            
+            .drag-drop-title {
+                font-size: 20px;
+            }
+            
+            .limits-info {
+                flex-direction: column;
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <div class="header-content">
+            <div class="logo-section">
+                <div class="monster-icon">
+                    <svg width="60" height="60" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M 100 60 C 75 60 55 80 55 110 C 55 145 70 170 100 170 C 130 170 145 145 145 110 C 145 80 125 60 100 60" 
+                              fill="#A259FF" stroke="#2D2D3A" stroke-width="2"/>
+                        <rect x="75" y="50" width="12" height="20" fill="#FFD500" stroke="#2D2D3A" stroke-width="2" rx="6"/>
+                        <rect x="113" y="50" width="12" height="20" fill="#FFD500" stroke="#2D2D3A" stroke-width="2" rx="6"/>
+                        <rect x="80" y="110" width="40" height="35" fill="#2D2D3A" rx="5"/>
+                        <text x="100" y="133" font-family="Arial Black" font-size="22" fill="#FFD500" text-anchor="middle">$</text>
+                        <circle cx="85" cy="85" r="8" fill="white"/>
+                        <circle cx="115" cy="85" r="8" fill="white"/>
+                        <circle cx="85" cy="87" r="4" fill="#2D2D3A"/>
+                        <circle cx="115" cy="87" r="4" fill="#2D2D3A"/>
+                        <path d="M 85 95 Q 100 105 115 95" stroke="#2D2D3A" stroke-width="2" fill="none"/>
+                    </svg>
+                </div>
+                <div>
+                    <h1 style="font-size: 24px; margin: 0;">MONEY MONSTER</h1>
+                    <p style="font-size: 14px; opacity: 0.9; margin: 0;">Sistema de Captación de Extractos Bancarios</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-container">
+        <!-- Drag & Drop Section -->
+        <div class="drag-drop-section">
+            <div class="drag-drop-header">
+                <h1>📥 Captación de Extractos Bancarios</h1>
+                <p>Procesa automáticamente tus extractos bancarios en formato PDF</p>
+            </div>
+            
+            <div id="dragDropZone" class="drag-drop-zone">
+                <div class="drag-drop-icon">📄</div>
+                <div class="drag-drop-title">Arrastra aquí tus extractos bancarios PDF</div>
+                <div class="drag-drop-subtitle">o haz click para seleccionar archivos</div>
+                <input type="file" id="fileInput" class="file-input-hidden" multiple accept=".pdf">
+                
+                <div class="limits-info">
+                    <span class="limit-badge">📦 Máximo 50 archivos</span>
+                    <span class="limit-badge">💾 Máximo 10MB por archivo</span>
+                </div>
+            </div>
+            
+            <div id="filesProcessingList" class="files-processing-list"></div>
+        </div>
+
+        <!-- Instructions -->
+        <div class="instructions-section">
+            <h2>🚀 Cómo funciona</h2>
+            
+            <div class="instruction-step">
+                <div class="step-number">1</div>
+                <div class="step-content">
+                    <h3>Arrastra tus PDFs</h3>
+                    <p>Selecciona uno o varios extractos bancarios en formato PDF. Aceptamos archivos de todos los bancos brasileños principales.</p>
+                </div>
+            </div>
+            
+            <div class="instruction-step">
+                <div class="step-number">2</div>
+                <div class="step-content">
+                    <h3>Procesamiento automático</h3>
+                    <p>Nuestro sistema identifica automáticamente el banco, tipo de cuenta y extrae todas las transacciones del documento.</p>
+                </div>
+            </div>
+            
+            <div class="instruction-step">
+                <div class="step-number">3</div>
+                <div class="step-content">
+                    <h3>Validación inteligente</h3>
+                    <p>Verificamos la integridad de los datos comparando saldos y detectando posibles duplicados en tu historial.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+        <p>© 2024 Money Monster - Sistema de Captación v5.0</p>
+        <p>Desarrollado con ❤️ para simplificar tus finanzas</p>
+    </div>
+
+    <!-- JavaScript -->
+    <script>
+        // CONFIGURACIÓN MAKE WEBHOOK
+        const MAKE_WEBHOOK_URL = 'https://hook.integromat.com/YOUR_WEBHOOK_ID'; // REEMPLAZAR CON TU WEBHOOK ID
+        
+        // Elementos DOM
+        const dragDropZone = document.getElementById('dragDropZone');
+        const fileInput = document.getElementById('fileInput');
+        const filesProcessingList = document.getElementById('filesProcessingList');
+        
+        // Setup eventos drag & drop
+        dragDropZone.addEventListener('click', () => fileInput.click());
+        
+        dragDropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dragDropZone.classList.add('dragover');
+        });
+        
+        dragDropZone.addEventListener('dragleave', () => {
+            dragDropZone.classList.remove('dragover');
+        });
+        
+        dragDropZone.addEventListener('drop', handleDrop);
+        fileInput.addEventListener('change', handleFileSelect);
+        
+        // Función para manejar drop
+        function handleDrop(e) {
+            e.preventDefault();
+            dragDropZone.classList.remove('dragover');
+            const files = Array.from(e.dataTransfer.files);
+            procesarArchivos(files);
+        }
+        
+        // Función para manejar selección de archivos
+        function handleFileSelect(e) {
+            const files = Array.from(e.target.files);
+            procesarArchivos(files);
+        }
+        
+        // Función para procesar archivos
+        async function procesarArchivos(files) {
+            // Filtrar solo PDFs
+            const pdfFiles = files.filter(file => file.type === 'application/pdf');
+            
+            if (pdfFiles.length === 0) {
+                alert('Por favor, selecciona archivos PDF válidos');
+                return;
+            }
+            
+            // Validar límites
+            if (pdfFiles.length > 50) {
+                alert('Máximo 50 archivos permitidos por lote');
+                return;
+            }
+            
+            // Mostrar lista de procesamiento
+            filesProcessingList.style.display = 'block';
+            dragDropZone.classList.add('processing');
+            
+            // Procesar secuencialmente
+            for (const file of pdfFiles) {
+                // Validar tamaño
+                if (file.size > 10 * 1024 * 1024) { // 10MB
+                    mostrarErrorArchivo(file.name, 'Archivo excede 10MB');
+                    continue;
+                }
+                
+                await procesarArchivo(file);
+            }
+            
+            // Restaurar zona de drag & drop después de 3 segundos
+            setTimeout(() => {
+                dragDropZone.classList.remove('processing');
+            }, 3000);
+        }
+        
+        // Función para procesar un archivo individual
+        async function procesarArchivo(file) {
+            // Crear elemento de procesamiento
+            const fileItemId = `file-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+            const fileItem = crearElementoProcesamiento(file.name, fileItemId);
+            filesProcessingList.appendChild(fileItem);
+            
+            try {
+                // Convertir a base64
+                const base64 = await fileToBase64(file);
+                
+                // Preparar datos para Make
+                const payload = {
+                    file: {
+                        name: file.name,
+                        content: base64,
+                        size: file.size,
+                        type: file.type,
+                        timestamp: new Date().toISOString()
+                    },
+                    metadata: {
+                        source: 'money-monster-web',
+                        version: '5.0'
+                    }
+                };
+                
+                // Enviar a Make
+                const response = await fetch(MAKE_WEBHOOK_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                });
+                
+                if (response.ok) {
+                    actualizarEstadoArchivo(fileItemId, 'success', 'Enviado correctamente');
+                } else {
+                    throw new Error(`Error del servidor: ${response.status}`);
+                }
+                
+            } catch (error) {
+                console.error('Error procesando archivo:', error);
+                actualizarEstadoArchivo(fileItemId, 'error', `Error: ${error.message}`);
+            }
+        }
+        
+        // Convertir archivo a base64
+        function fileToBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = () => {
+                    // Extraer solo la parte base64 (sin el prefijo data:application/pdf;base64,)
+                    const base64 = reader.result.split(',')[1];
+                    resolve(base64);
+                };
+                reader.onerror = error => reject(error);
+            });
+        }
+        
+        // Crear elemento de procesamiento
+        function crearElementoProcesamiento(filename, id) {
+            const div = document.createElement('div');
+            div.id = id;
+            div.className = 'processing-file-item';
+            div.innerHTML = `
+                <div class="processing-file-icon">📄</div>
+                <div class="processing-file-info">
+                    <div class="processing-file-name">${filename}</div>
+                    <div class="processing-file-status">
+                        <span class="processing-spinner"></span>
+                        Procesando...
+                    </div>
+                </div>
+            `;
+            return div;
+        }
+        
+        // Actualizar estado del archivo
+        function actualizarEstadoArchivo(fileItemId, status, message) {
+            const fileItem = document.getElementById(fileItemId);
+            if (!fileItem) return;
+            
+            fileItem.className = `processing-file-item ${status}`;
+            const statusDiv = fileItem.querySelector('.processing-file-status');
+            
+            if (status === 'success') {
+                statusDiv.innerHTML = `✅ ${message}`;
+            } else if (status === 'error') {
+                statusDiv.innerHTML = `❌ ${message}`;
+            }
+            
+            // Auto-ocultar elementos exitosos después de 5 segundos
+            if (status === 'success') {
+                setTimeout(() => {
+                    fileItem.style.opacity = '0';
+                    setTimeout(() => fileItem.remove(), 300);
+                }, 5000);
+            }
+        }
+        
+        // Mostrar error de archivo
+        function mostrarErrorArchivo(filename, error) {
+            const fileItemId = `file-error-${Date.now()}`;
+            const fileItem = crearElementoProcesamiento(filename, fileItemId);
+            filesProcessingList.appendChild(fileItem);
+            actualizarEstadoArchivo(fileItemId, 'error', error);
+        }
+        
+        // Log para debugging
+        console.log('Money Monster - Sistema de Captación v5.0 cargado');
+        console.log('Webhook configurado:', MAKE_WEBHOOK_URL);
+    </script>
+</body>
+</html>
